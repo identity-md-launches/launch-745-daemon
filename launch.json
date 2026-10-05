@@ -1,0 +1,24 @@
+{
+  "kind": "custom_token",
+  "token": {
+    "contract": "DaemonToken",
+    "name": "Daemon",
+    "symbol": "DAEMON",
+    "decimals": 18,
+    "constructorArgs": [],
+    "totalSupply": "1000000000000000000000000000"
+  },
+  "contracts": [],
+  "pool": {
+    "pairedCurrency": "0xd34a99bc0f67ae1bbd63c660e6d0b0dd03e263b7",
+    "fee": 3000,
+    "tickSpacing": 60,
+    "initialPrice": "56022770974786139918731938"
+  },
+  "economics": {
+    "poolBps": 8800,
+    "initialMarketCapWei": "500000000000000000000",
+    "remainderTo": "0xcd5a046e76029fccc360ea842a1c42bc4b302c2f"
+  },
+  "notes": "DaemonToken (src/DaemonToken.sol) is the requester's token: a self-contained, fixed-supply ERC-20 named Daemon (DAEMON) with 18 decimals. Its constructor takes no arguments and mints the entire supply, 1,000,000,000 * 10^18 = 1000000000000000000000000000 minor units, once to msg.sender, which under ProjectFactory.launchCustom is the factory; token.totalSupply is that exact amount. totalSupply() returns a compile-time constant, so the supply can never grow after launch. There is no owner, admin, minter, pauser, blocklist, fee, burn hook, reflection, proxy, receive/fallback or external call, and the runtime bytecode contains no DELEGATECALL, CALLCODE or SELFDESTRUCT. Transfers move exactly the stated amount, so the launch flows (factory to distributor, distributor to claimants, the factory's single-sided seed into the pool manager, trader swaps both ways) arrive whole without the token knowing any launch address; the constructor therefore takes none of $factory, $poolManager or $launchNumber. There are no application contracts and no initialization calls: the accepted tree holds only the token, its unit tests and a stand-alone deploy script (script/DeployDaemonToken.s.sol) that plays no part in the launch, where the factory deploys the token itself.\n\neconomics is copied verbatim from the job: poolBps 8800 of the whole supply seeds the single-sided pool, initialMarketCapWei is the opening fully diluted cap of 500 IMD (500000000000000000000 minor units of the pair token), and remainderTo receives the rest of the requester's share. The swarm's 1000 bps is taken by the factory and is not written here.\n\npool.pairedCurrency is the pair token the request chose, 0xd34a99bc0f67ae1bbd63c660e6d0b0dd03e263b7 (Identity.md, IMD, 18 decimals), not ETH. The request named no fee tier, so the launch policy's standard 0.3% tier is used: fee 3000 with its canonical tickSpacing 60. pool.initialPrice is provenance only; the deployer derives the opening price from economics.initialMarketCapWei and token.totalSupply. The value recorded is that derivation: 500e18 / 1e27 = 5e-7 IMD per DAEMON, sqrtPriceX96 = floor(sqrt(5e-7) * 2^96) = 56022770974786139918731938, written for DAEMON sorting as currency0 (token address below the IMD address, the likelier CREATE2 outcome). If the deployed token address sorts above IMD, the same opening price expressed with DAEMON as currency1 is sqrtPriceX96 112045541949572279837463876454916. Both lie within Uniswap v4's MIN_SQRT_PRICE and MAX_SQRT_PRICE.\n\nToolchain: solc 0.8.26, EVM cancun, optimizer 200 runs, bytecode_hash none, cbor_metadata false (foundry.toml, unchanged). forge build and forge test (39 tests, including fuzz tests and the launch-floor mirrors for admin selectors, privileged calls and the opcode scan) pass locally. This manifest changes no other file."
+}
